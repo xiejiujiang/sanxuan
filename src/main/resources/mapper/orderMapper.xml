@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.bswj.mapper.orderMapper">
+
+    <select id="getDBAllOrgList" resultType="java.util.Map">
+        select id_num,code,AppKey,AppSecret,access_token,refresh_token,user_id,org_id,app_name,update_time from XXX_code_token
+    </select>
+
+    <update id="updateOrgToken" parameterType="java.util.Map">
+        update XXX_code_token set access_token = #{access_token},refresh_token = #{refresh_token},update_time = GETDATE()
+        where org_id = #{org_id}
+    </update>
+
+    <select id="getTokenByAppKey" parameterType="java.lang.String" resultType="java.lang.String">
+        select access_token from XXX_code_token where AppKey = #{AppKey}
+    </select>
+
+    <select id="getAppKeySecretByAppKey" parameterType="java.lang.String" resultType="java.util.Map">
+        select AppKey,AppSecret from XXX_code_token where org_id = #{OrgId}
+    </select>
+
+    <select id="getfjidByCode" parameterType="java.lang.String" resultType="java.util.Map">
+        select t2.id,t2.FileType,t2.FileSize,t2.FileName,t2.UploadPath
+        from SA_SaleDelivery t1,eap_attachmentinfo t2
+        where t1.code = #{code} and t1.id = t2.AssociateID
+        order by t2.id asc
+    </select>
+
+
+    <select id="getMobileByCode" parameterType="java.lang.String" resultType="java.lang.String">
+        select mobilePhoneNo  from AA_Person where code = #{code}
+    </select>
+
+    <update id="updateTSAorderFlag" parameterType="java.lang.String">
+        update SA_SaleDelivery set priuserdefnvc6 = 'HQ1.6' where code = #{code}
+    </update>
+
+    <select id="getTSAorderFlag" parameterType="java.lang.String" resultType="java.lang.String">
+        select priuserdefnvc6 from SA_SaleDelivery where code = #{code}
+    </select>
+
+    <update id="updateUploadHQState" parameterType="java.util.Map">
+        update SA_SaleDelivery set priuserdefnvc4 = #{flag} where code = #{code}
+    </update>
+
+    <update id="updateTOrderMemo" parameterType="java.util.Map">
+        update SA_SaleDelivery set memo = memo + #{memo} where code = #{code}
+    </update>
+
+    <select id="getUnuploadList" resultType="java.util.Map">
+        select code
+        from SA_SaleDelivery
+        where (priuserdefnvc4 is null or priuserdefnvc4 = '') and idsettlecustomer in (1724,1723)
+        and voucherState = 189 and voucherdate > '2022-07-24' and (priuserdefnvc6 is null or priuserdefnvc6 = '')
+        and (idproject not  in (1,2,8) or  idproject is null) and (memo not like '%差异自动生成%' or memo is null)
+    </select>
+
+    <select id="getUserInfoByMobile" resultType="java.util.Map" parameterType="java.lang.String">
+        select TOP 1
+               t2.code as departmentCode,t1.code as personCode
+        from AA_person t1,AA_department t2
+        where t1.iddepartment = t2.id and t1.mobilePhoneNo = #{mobile}
+    </select>
+
+    <select id="getBankNameList" resultType="java.util.Map">
+        select code,name,bankNo,bankName
+        from AA_BankAccount
+    </select>
+
+    <select id="getSaPuOrderList" resultType="java.util.Map" parameterType="java.lang.String">
+        select t1.code,CONVERT(varchar(100), t1.voucherdate, 23) as voucherdate,
+               t3.name as partnerName,t1.taxAmount
+        from SA_SaleOrder t1,AA_Partner t3
+        where t1.idcustomer = t3.id
+        <if test="startDate !='' ">
+            and t1.voucherdate >= #{startDate}
+        </if>
+        <if test="endDate !='' ">
+            and t1.voucherdate <![CDATA[ <= ]]> #{endDate}
+        </if>
+        <if test="Code !='' ">
+            and t1.code = #{Code}
+        </if>
+    </select>
+
+    <select id="getInvetoryTaxRateByCode" resultType="java.util.Map" parameterType="java.lang.String">
+        select top 1
+        ISNULL(t2.name,9) AS taxRate,t3.name as unitname
+        from AA_inventory t1,eap_EnumItem t2,AA_Unit t3
+        where t1.code = #{inventoryCode} and t1.taxRate = t2.id and t1.idUnitBySale = t3.id
+    </select>
+
+    <select id="getCustomerCount" resultType="java.lang.Integer" parameterType="java.lang.String">
+        select count(1) from AA_partner where code = #{code}
+    </select>
+
+    <select id="getPartnerClassCodeBySHI" resultType="java.lang.String" parameterType="java.lang.String">
+        select top 1 code from AA_PartnerClass where name like '%'+#{shi}+'%' and isEndNode = 1
+    </select>
+
+    <select id="getSapuOrderAfterList" resultType="java.lang.Integer" parameterType="java.lang.String">
+        select count(id) from SA_SaleDelivery where SourceVoucherCode = #{Code}
+    </select>
+
+    <select id="getSourceVoucherDetailIdBy" resultType="java.lang.Integer" parameterType="java.lang.String">
+        select top 1  t1.id
+        from  SA_SaleDelivery_b t1,AA_inventory t2,SA_SaleDelivery t3
+        where t1.idinventory = t2.id and t2.code = #{inventoryCode} and t1.idSaleDeliveryDTO = t3.id
+        and t3.code = #{code}
+    </select>
+
+    <select id="getDQCODEBY" resultType="java.lang.String" parameterType="java.lang.String">
+        select top 1
+        ISNULL(code,#{Code}) as code
+        from SA_SaleDelivery where code LIKE '%'+#{Code}+'%' order by id desc
+    </select>
+</mapper>
