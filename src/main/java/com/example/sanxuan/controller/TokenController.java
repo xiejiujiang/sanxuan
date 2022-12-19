@@ -204,19 +204,17 @@ public class TokenController {
             sign = URLDecoder.decode(sign,"UTF-8");
             //LOGGER.info("-------- 销售订单api (转义处理前) sign == " + sign);
             sign = sign.replaceAll(" ","+");
-            sign = sign.replaceAll("sign=","");
-            //LOGGER.info("-------- 销售订单api (转义处理后) sign == " + sign);
-
-            String token = orderMapper.getTokenByAppKey("3uWZf0mu");//3uWZf0mu(正式)
             if(sign != null && !"".equals(sign)){
+                sign = sign.substring(9,sign.length()-2);//这一步是为了 拿到 纯密文
                 String parmaJosnStr = EncryptUtil.decrypt(sign,key);
                 LOGGER.info("-------- 小程序订单信息解密后的Str == " + parmaJosnStr);
                 JSONObject job = JSONObject.parseObject(parmaJosnStr);
-                XcxSaParam xcxSaParam =  job.toJavaObject(XcxSaParam.class);//销货单的订阅信息DTO
+                XcxSaParam xcxSaParam = job.toJavaObject(XcxSaParam.class);
                 List<Map<String,Object>> saPuOrderList = orderMapper.getSaPuOrderList(xcxSaParam.getCode(),"","");
                 if("15".equals(xcxSaParam.getBusinessType()) && saPuOrderList != null && saPuOrderList.size() != 0){
                     return "{ \"result\":\"订单已存在！\" }";
                 }else{
+                    String token = orderMapper.getTokenByAppKey("3uWZf0mu");//3uWZf0mu(正式)
                     return basicService.createSaPuOrder(xcxSaParam,token);
                 }
             }else{

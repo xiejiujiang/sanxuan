@@ -69,7 +69,7 @@
 
     <select id="getSaPuOrderList" resultType="java.util.Map" parameterType="java.lang.String">
         select t1.code,CONVERT(varchar(100), t1.voucherdate, 23) as voucherdate,
-               t3.name as partnerName,t1.taxAmount
+               t3.name as partnerName,t1.taxAmount,t1.ExternalCode
         from SA_SaleOrder t1,AA_Partner t3
         where t1.idcustomer = t3.id
         <if test="startDate !='' ">
@@ -79,7 +79,7 @@
             and t1.voucherdate <![CDATA[ <= ]]> #{endDate}
         </if>
         <if test="Code !='' ">
-            and t1.code = #{Code}
+            and t1.ExternalCode = #{Code}
         </if>
     </select>
 
