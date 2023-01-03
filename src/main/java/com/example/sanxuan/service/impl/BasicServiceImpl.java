@@ -274,7 +274,7 @@ public class BasicServiceImpl implements BasicService {
 
     @Override
     public String createSaPuOrder(XcxSaParam xcxSaParam, String token) {
-        String result = "{ \"result\":\"success\" }";
+        String result = "{ \"code\":\"0000\",\"result\":\"success\" , \"msg\":\"\"}";
         try {
             if("15".equals(xcxSaParam.getBusinessType())){
                 //先设置税率
@@ -284,11 +284,13 @@ public class BasicServiceImpl implements BasicService {
                     Map<String,Object> taxRateUnit = orderMapper.getInvetoryTaxRateByCode(inventoryCode);//从存货档案种 获取对应的税率和单位
                     String sysUnit = taxRateUnit.get("unitname").toString();//系统的 单位参数
                     String paramUnit = xcxSaParam.getSaleOrderDetails().get(i).getUnitName();//传入的 单位参数
-                    if(paramUnit == null || "".equals(paramUnit) || !sysUnit.equals(paramUnit)){
+                    //if(paramUnit == null || "".equals(paramUnit) ){
+                    // 都默认 使用 T+ 的 存货里面的 销售单位
                         xcxSaParam.getSaleOrderDetails().get(i).setSysUnitName(sysUnit);
-                    }else{
-                        xcxSaParam.getSaleOrderDetails().get(i).setSysUnitName(paramUnit);
-                    }
+                   // }else{
+                        //xcxSaParam.getSaleOrderDetails().get(i).setSysUnitName(paramUnit);
+                    //}
+                    xcxSaParam.getSaleOrderDetails().get(i).setInventoryName(taxRateUnit.get("InventoryName").toString());
                 }
 
                 //销售订单的JSON
@@ -297,42 +299,44 @@ public class BasicServiceImpl implements BasicService {
                 String apiresult1 = HttpClient.HttpPost(
                             "/tplus/api/v2/saleOrder/Create",
                             json,
-                            "3uWZf0mu",
-                            "F07A56582E5DDBC8F68358940138DBF5",
+                            "3j0HzDMK",
+                            "F4FF8EF3A6AF2EFFEC3D1A70261D8AC3",
                             token);
                 LOGGER.info("1调用T+ 创建销售订单API的返回： apiresult1 == " + apiresult1);
-                if(apiresult1 != null && !"".equals(apiresult1) && !"".equals(JSONObject.parseObject(apiresult1).getString("message"))){
+                if(apiresult1 != null && !"".equals(apiresult1) && !"null".equals(apiresult1)
+                        && !"".equals(JSONObject.parseObject(apiresult1).getString("message"))){
                     //说明 访问接口失败了，就 再来一次
                     String apiresult2 = HttpClient.HttpPost(
                             "/tplus/api/v2/saleOrder/Create",
                             json,
-                            "3uWZf0mu",
-                            "F07A56582E5DDBC8F68358940138DBF5",
+                            "3j0HzDMK",
+                            "F4FF8EF3A6AF2EFFEC3D1A70261D8AC3",
                             token);
                     LOGGER.info("2调用T+ 创建销售订单API的返回： apiresult2 == " + apiresult2);
-                    if(apiresult2 != null && !"".equals(apiresult2) && !"".equals(JSONObject.parseObject(apiresult2).getString("message"))){
-                        return  "{ \"result\":\" "+ JSONObject.parseObject(apiresult2).getString("message") +" \" }";
+                    if(apiresult2 != null && !"".equals(apiresult2) && !"null".equals(apiresult2)
+                            && !"".equals(JSONObject.parseObject(apiresult2).getString("message"))){
+                        return  "{ \"code\":\"9999\",\"result\":\" "+ JSONObject.parseObject(apiresult2).getString("message") +" \", \"msg\":\"\" }";
                     }else{
                         //调用API两次次 后 成功！，返回 系统自动生成的code
                         List<Map<String,Object>> listDB = orderMapper.getSaPuOrderList(xcxSaParam.getCode(),"","");
                         if(listDB != null && listDB.size()!=0 && !"".equals(listDB.get(0).get("code").toString()) ){
-                            return "{ \"result\":\"success\",\"code\":\" "+listDB.get(0).get("code").toString()+" \" }";
+                            return "{ \"code\":\"0000\",\"result\":\"success\",\"msg\":\" "+listDB.get(0).get("code").toString()+" \" }";
                         }else{
-                            return "{ \"result\":\"API调用后数据库中查不到此订单信息，判断为失败，请先登录系统，检查订单是否存在！\" }";
+                            return "{ \"code\":\"9999\",\"result\":\"API调用后数据库中查不到此订单信息，判断为失败，请先登录系统，检查订单是否存在！\", \"msg\":\"\" }";
                         }
                     }
                 }else{
                     //调用API一次 即成功！，返回 系统自动生成的code
                     List<Map<String,Object>> listDB = orderMapper.getSaPuOrderList(xcxSaParam.getCode(),"","");
-                    if(listDB != null && listDB.size()!=0 && !"".equals(listDB.get(0).get("code").toString()) ){
-                        return "{ \"result\":\"success\",\"code\":\" "+listDB.get(0).get("code").toString()+" \" }";
+                    if(listDB != null && listDB.size() !=0 && !"".equals(listDB.get(0).get("code").toString()) ){
+                        return "{ \"code\":\"0000\",\"result\":\"success\",\"msg\":\" "+listDB.get(0).get("code").toString()+" \" }";
                     }else{
-                        return "{ \"result\":\"API调用后数据库中查不到此订单信息，判断为失败，请先登录系统，检查订单是否存在！\" }";
+                        return "{ \"code\":\"9999\",\"result\":\"API调用后数据库中查不到此订单信息，判断为失败，请先登录系统，检查订单是否存在！\", \"msg\":\"\" }";
                     }
                 }
             }else{
                 // 退货：售后的单据， 判断是 红字的销售订单 ，还是 红字的销货单
-                for(int i=0;i<xcxSaParam.getSaleOrderDetails().size();i++ ){
+                /*for(int i=0;i<xcxSaParam.getSaleOrderDetails().size();i++ ){
                     String inventoryCode = xcxSaParam.getSaleOrderDetails().get(i).getInventoryCode();
                     Map<String,Object> taxRateUnit = orderMapper.getInvetoryTaxRateByCode(inventoryCode);//从存货档案种 获取对应的税率
                     if(taxRateUnit == null || "".equals(taxRateUnit)){
@@ -374,11 +378,11 @@ public class BasicServiceImpl implements BasicService {
                 }else{
                     //红字的 销货单 JSON  ( 取当前 最大的尾号 + 1.再 加  横   )
                     // 暂未处理 这种情况
-                }
+                }*/
             }
         } catch (Exception e) {
             e.printStackTrace();
-            result = "{ \"result\":\"参数合格！但是官方API访问失败，请咨询开发（出现异常！）\" }";
+            result = "{\"code\":\"9995\", \"result\":\"参数合格！但是官方API访问失败，请咨询开发（出现异常！）\",\"msg\":\"\" }";
             return result;
         }
         return result; // 创建成功  result:null

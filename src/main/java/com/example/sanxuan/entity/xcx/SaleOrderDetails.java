@@ -12,6 +12,7 @@ package com.example.sanxuan.entity.xcx;
 public class SaleOrderDetails {
 
     private String InventoryCode;
+    private String InventoryName;
     private Float OrigTaxPrice;
     private Float Quantity;
     private String UnitName;
@@ -20,6 +21,8 @@ public class SaleOrderDetails {
     private String taxRate;
     private String sourceVoucherDetailId;
     private String sysUnitName;
+    private String IsSample;
+
     public void setInventoryCode(String InventoryCode) {
          this.InventoryCode = InventoryCode;
      }
@@ -84,5 +87,21 @@ public class SaleOrderDetails {
 
     public void setSysUnitName(String sysUnitName) {
         this.sysUnitName = sysUnitName;
+    }
+
+    public String getInventoryName() {
+        return InventoryName;
+    }
+
+    public void setInventoryName(String inventoryName) {
+        InventoryName = inventoryName;
+    }
+
+    public String getIsSample() {
+        return IsSample;
+    }
+
+    public void setIsSample(String isSample) {
+        IsSample = isSample;
     }
 }

@@ -59,7 +59,7 @@ public class TokenController {
             String params=buffer.readLine();
             JSONObject jsonObject = JSONObject.parseObject(params);
             String encryptMsg = jsonObject.getString("encryptMsg");
-            String destr = AESUtil.decrypt(encryptMsg,"123456789012345x");
+            String destr = AESUtils.aesDecrypt(encryptMsg,"123456789012345x");
             // {"id":"AC1C04B100013301500B4A9B012DB2EC","appKey":"A9A9WH1i","appId":"58","msgType":"SaleDelivery_Audit","time":"1649994072443","bizContent":{"externalCode":"","voucherID":"23","voucherDate":"2022/4/15 0:00:00","voucherCode":"SA-2022-04-0011"},"orgId":"90015999132","requestId":"86231b63-f0c2-4de1-86e9-70557ba9cd62"}
             JSONObject job = JSONObject.parseObject(destr);
             if("SaleDelivery_Audit".equals(job.getString("msgType"))){
@@ -211,18 +211,18 @@ public class TokenController {
                 JSONObject job = JSONObject.parseObject(parmaJosnStr);
                 XcxSaParam xcxSaParam = job.toJavaObject(XcxSaParam.class);
                 List<Map<String,Object>> saPuOrderList = orderMapper.getSaPuOrderList(xcxSaParam.getCode(),"","");
-                if("15".equals(xcxSaParam.getBusinessType()) && saPuOrderList != null && saPuOrderList.size() != 0){
-                    return "{ \"result\":\"订单已存在！\" }";
-                }else{
-                    String token = orderMapper.getTokenByAppKey("3uWZf0mu");//3uWZf0mu(正式)
+                if(saPuOrderList == null || saPuOrderList.size() == 0 ){
+                    String token = orderMapper.getTokenByAppKey("3j0HzDMK");
                     return basicService.createSaPuOrder(xcxSaParam,token);
+                }else{
+                    return "{ \"code\":\"9999\", \"result\":\"订单已存在！\", \"msg\":\""+saPuOrderList.get(0).get("code").toString()+"\" }";
                 }
             }else{
-                return "{ \"result\":\"参数不合格！\" }";
+                return "{ \"code\":\"9998\", \"result\":\"参数不合格！\" , \"msg\":\"\"}";
             }
         }catch (Exception e){
             e.printStackTrace();
-            return "{ \"result\":\"程序异常，请咨询开发！\"}";
+            return "{ \"code\":\"9997\", \"result\":\"程序异常，请咨询开发！\"c }";
         }
     }
 

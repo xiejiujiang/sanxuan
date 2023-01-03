@@ -259,7 +259,7 @@ public class MapToJson {
         Map<String,Object> dto = new HashMap<String,Object>();
         Map<String,Object> sa = new HashMap<String,Object>();
 
-        //sa.put("Code",xcxSaParam.getCode());  //销售订单的编号 ，用的是小程序的
+        //sa.put("Code",xcxSaParam.getCode());  //销售订单的编号 ，用系统自动生成的
 
         Map<String,Object> BusinessType = new HashMap<String,Object>();
         BusinessType.put("Code",xcxSaParam.getBusinessType()); // 15--普通销售  16--销售退货"
@@ -270,11 +270,11 @@ public class MapToJson {
             sa.put("ReturnOrderType",ReturnOrderType);
         }
         Map<String,Object> Department = new HashMap<String,Object>();
-        Department.put("Code","412");//部门编码  市场中心(默认)
+        Department.put("Code","34");//部门编码  市场中心(默认)
         sa.put("Department",Department);
 
         Map<String,Object> Clerk = new HashMap<String,Object>();
-        Clerk.put("Code","41203");//业务员编码  刘佳慧(默认)
+        Clerk.put("Code","2701");//业务员编码  刘佳慧(默认)
         sa.put("Clerk",Clerk);
 
         String VoucherDate = xcxSaParam.getVoucherDate();// 如果没传，默认就是今天
@@ -284,14 +284,14 @@ public class MapToJson {
         }else{
             sa.put("VoucherDate",VoucherDate);//单据日期  如果 小程序 不传，就可以 使用 当前日期
         }
-        sa.put("ExternalCode",xcxSaParam.getCode());//外部订单号
+        sa.put("ExternalCode",xcxSaParam.getCode());//外部订单号 用的是小程序的订单号
         sa.put("Address",xcxSaParam.getAddress());//送货地址
         sa.put("LinkMan",xcxSaParam.getContacter());//联系人
         sa.put("ContactPhone",xcxSaParam.getContactMobile() );//联系电话
 
         //传入 表头的字符自定义项1， 内容： 小程序(用于区分此单是从哪里来的)
         List<String> biaotoulistkey = new ArrayList<String>();
-        biaotoulistkey.add("priuserdefnvc1");
+        biaotoulistkey.add("priuserdefnvc2");
         List<String> biaotoulistvalue = new ArrayList<String>();
         biaotoulistvalue.add("小程序");
         sa.put("DynamicPropertyKeys",biaotoulistkey);
@@ -299,10 +299,10 @@ public class MapToJson {
 
         // 如果客户信息没有，就需要 先创建一个客户信息 注意 往来分类 是按 地区来的。
         Map<String,Object> Customer = new HashMap<String,Object>();
-        Customer.put("Code","");//客户编码  小程序平台客户(默认)
+        Customer.put("Code","0024200");//客户编码  小程序平台客户(默认)
         sa.put("Customer",Customer);
         Map<String,Object> SettleCustomer = new HashMap<String,Object>();
-        SettleCustomer.put("Code","");//结算客户编码（一般等同于 客户编码） 小程序平台客户 (默认)
+        SettleCustomer.put("Code","0024200");//结算客户编码（一般等同于 客户编码） 小程序平台客户 (默认)
         sa.put("SettleCustomer",SettleCustomer);
 
         /*Map<String,Object> Warehouse = new HashMap<String,Object>();
@@ -314,15 +314,22 @@ public class MapToJson {
         List<Map<String,Object>> SaleDeliveryDetailsList = new ArrayList<Map<String,Object>>();
         for(int i=0;i<xcxSaParam.getSaleOrderDetails().size();i++ ){
             Map<String,Object> DetailM = new HashMap<String,Object>();
-
-            Map<String,Object> DetailWareHouse = new HashMap<String,Object>();
-            DetailWareHouse.put("Code","");// 仓库编码  当传入到ERP时，成品的产品在明细字段的仓库中默认为：中通仓，   样品的产品在明细字段的仓库中默认为：顺丰仓
-            DetailM.put("Warehouse",DetailWareHouse);
-
             Map<String,Object> DetailMInventory = new HashMap<String,Object>();
             String inventoryCode = xcxSaParam.getSaleOrderDetails().get(i).getInventoryCode();
+            String InventoryName = xcxSaParam.getSaleOrderDetails().get(i).getInventoryName();
+            String IsSample = xcxSaParam.getSaleOrderDetails().get(i).getIsSample();// 1 样品， 0 非样品
             DetailMInventory.put("code",inventoryCode);//明细1 的 存货编码
             DetailM.put("Inventory",DetailMInventory);
+
+            //根据这个 InventoryName (样品)
+            Map<String,Object> DetailWareHouse = new HashMap<String,Object>();
+            if("1".equals(IsSample)){
+                DetailWareHouse.put("Code","15");//样品的产品在明细字段的仓库中默认为：顺丰仓
+            }else{
+                DetailWareHouse.put("Code","41");//成品的产品在明细字段的仓库中默认为：中通仓
+            }
+            DetailM.put("Warehouse",DetailWareHouse);
+
             Map<String,Object> DetailMUnit = new HashMap<String,Object>();
             DetailMUnit.put("Name",xcxSaParam.getSaleOrderDetails().get(i).getSysUnitName());
             DetailM.put("Unit",DetailMUnit);
@@ -334,12 +341,16 @@ public class MapToJson {
             }else{
                 DetailM.put("IsPresent",false);
             }
-            DetailM.put("DetailMemo",xcxSaParam.getSaleOrderDetails().get(i).getMemo());//商品备注
+            if(xcxSaParam.getSaleOrderDetails().get(i).getMemo() != null && !"".equals(xcxSaParam.getSaleOrderDetails().get(i).getMemo())){
+                DetailM.put("DetailMemo",xcxSaParam.getSaleOrderDetails().get(i).getMemo());//商品备注
+            }
             SaleDeliveryDetailsList.add(DetailM);
         }
 
         sa.put("SaleOrderDetails",SaleDeliveryDetailsList);
-        sa.put("Memo",""+xcxSaParam.getCustomerMemo());
+        if(xcxSaParam.getCustomerMemo() != null && !"".equals(xcxSaParam.getCustomerMemo())){
+            sa.put("Memo",xcxSaParam.getCustomerMemo());
+        }
         dto.put("dto",sa);
         String json = JSONObject.toJSONString(dto);
         return json;
