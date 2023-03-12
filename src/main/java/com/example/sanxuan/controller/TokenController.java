@@ -198,6 +198,8 @@ public class TokenController {
     public @ResponseBody String createSaPuOrder(@RequestBody String sign,HttpServletRequest request, HttpServletResponse response) {
         LOGGER.info("------------------- 小程序调用了T+的 销售订单 创建API -------------------");
         try{
+            String ip = HttpClient.getRealRequestIp(request);
+            LOGGER.info(" IP === " + ip + "发起了访问请求");
             String today = new SimpleDateFormat("yyyyMMdd").format(new Date());//当日
             String key = Md5.md5(today).substring(0,16);
             //String sign = request.getParameter("sign");
@@ -210,12 +212,16 @@ public class TokenController {
                 LOGGER.info("-------- 小程序订单信息解密后的Str == " + parmaJosnStr);
                 JSONObject job = JSONObject.parseObject(parmaJosnStr);
                 XcxSaParam xcxSaParam = job.toJavaObject(XcxSaParam.class);
-                List<Map<String,Object>> saPuOrderList = orderMapper.getSaPuOrderList(xcxSaParam.getCode(),"","");
-                if(saPuOrderList == null || saPuOrderList.size() == 0 ){
-                    String token = orderMapper.getTokenByAppKey("3j0HzDMK");
-                    return basicService.createSaPuOrder(xcxSaParam,token);
-                }else{
-                    return "{ \"code\":\"9999\", \"result\":\"订单已存在！\", \"msg\":\""+saPuOrderList.get(0).get("code").toString()+"\" }";
+                if(xcxSaParam != null && xcxSaParam.getCode() != null && !"".equals(xcxSaParam.getCode())){
+                    List<Map<String,Object>> saPuOrderList = orderMapper.getSaPuOrderList(xcxSaParam.getCode(),"","");
+                    if(saPuOrderList == null || saPuOrderList.size() == 0 ){
+                        String token = orderMapper.getTokenByAppKey("3j0HzDMK");
+                        return basicService.createSaPuOrder(xcxSaParam,token);
+                    }else{
+                        return "{ \"code\":\"9999\", \"result\":\"订单已存在！\", \"msg\":\""+saPuOrderList.get(0).get("code").toString()+"\" }";
+                    }
+                }else {
+                    return "{ \"code\":\"9998\", \"result\":\"参数不合格！\" , \"msg\":\"\"}";
                 }
             }else{
                 return "{ \"code\":\"9998\", \"result\":\"参数不合格！\" , \"msg\":\"\"}";

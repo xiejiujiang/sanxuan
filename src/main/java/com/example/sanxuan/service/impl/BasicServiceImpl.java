@@ -282,6 +282,11 @@ public class BasicServiceImpl implements BasicService {
                     String inventoryCode = xcxSaParam.getSaleOrderDetails().get(i).getInventoryCode();
                     xcxSaParam.getSaleOrderDetails().get(i).setTaxRate("0");//沟通过，默认 是 0
                     Map<String,Object> taxRateUnit = orderMapper.getInvetoryTaxRateByCode(inventoryCode);//从存货档案种 获取对应的税率和单位
+                    if(taxRateUnit == null){
+                        LOGGER.info("----- 传入的 inventoryCode ： " + inventoryCode + "，找不到对应的T+档案，无法执行销售订单创建！");
+                        result = "{\"code\":\"9994\", \"result\":\" inventoryCode找不到对应的档案，无法创建订单！\",\"msg\":\"\" }";
+                        return result;
+                    }
                     String sysUnit = taxRateUnit.get("unitname").toString();//系统的 单位参数
                     String paramUnit = xcxSaParam.getSaleOrderDetails().get(i).getUnitName();//传入的 单位参数
                     //if(paramUnit == null || "".equals(paramUnit) ){

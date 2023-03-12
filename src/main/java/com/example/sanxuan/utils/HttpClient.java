@@ -19,6 +19,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
@@ -495,5 +496,33 @@ public class HttpClient {
         out.close();
         in.close();
         return result;
+    }
+
+    /**
+     * 真是请求IP
+     * @param request
+     * @return
+     */
+    public static String getRealRequestIp(HttpServletRequest request) {
+        String ip = request.getHeader("x-forwarded-for");
+        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("Proxy-Client-IP");
+        }
+        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("WL-Proxy-Client-IP");
+        }
+        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("HTTP_CLIENT_IP");
+        }
+        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("HTTP_X_FORWARDED_FOR");
+        }
+        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        if (null != ip && ip.contains(",")) {
+            ip = ip.substring(0, ip.indexOf(","));
+        }
+        return ip;
     }
 }
